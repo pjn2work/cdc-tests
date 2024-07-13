@@ -1,0 +1,311 @@
+---
+
+MEMBER1: &M1
+  start_date: "2024-03-01"
+  is_active: true
+  amount: 15.0
+  name: "Member 1"
+  tlf: "912000111"
+  email: "member1@gmail.com"
+  notes: "member 1 notes"
+
+
+MEMBER2: &M2
+  name: "Member 2"
+  tlf: "933000222"
+  email: "member2@gmail.com"
+  notes: "member 2 notes"
+
+
+
+CONNECTIVITY:
+  _run_mode_: USECASES_AS_TESTSTEPS
+
+  _usecases_:
+
+    step_health:
+      _exec_method_: api_get_str
+      url: health
+      expected_response: "\"I'm alive\""
+
+
+
+TEST_401:
+  _run_mode_: 1
+
+  _scenarios_:
+
+
+    oauth:
+
+      step_clear_bearer_token:
+        _exec_method_: clear_bearer_token
+
+      step_hash:
+        _exec_method_: api_get
+        url: oauth/hash
+        control:
+          expected_status_code: 200
+        params:
+          plain_password: pedro
+        expected_response:
+          client_name:
+          client_secret: "74f4045127cc0ae8231addabe401d38934ccc519c66e9566ced40d8239be9405"
+          scopes: []
+
+      step_token:
+        _exec_method_: api_post
+        url: oauth/token
+        control:
+          expected_status_code: 200
+        params:
+          cc: "Y2VjYzpwZWRybw=="
+        expected_response:
+          token_type: "bearer"
+
+
+    members:
+
+      step_clear_bearer_token:
+        _exec_method_: clear_bearer_token
+
+      step_post_member:
+        _exec_method_: api_post
+        url: api/members/
+        control:
+          expected_status_code: 401
+        data: *M1
+        expected_response:
+          detail: Not authenticated
+
+      step_get_member:
+        _exec_method_: api_get
+        _based_on_: ["members/step_post_member", ["control", "expected_response"]]
+        url: api/members/1
+
+      step_list_members:
+        _exec_method_: api_list
+        url: api/members/
+        control:
+          expected_status_code: 401
+
+      step_list_donations:
+        _exec_method_: api_list
+        url: api/members/donations
+        control:
+          expected_status_code: 401
+
+      step_update_member:
+        _exec_method_: api_put
+        url: api/members/1
+        control:
+          expected_status_code: 401
+        data: *M2
+
+      step_change_member_active:
+        _exec_method_: api_put
+        url: api/members/1/active
+        control:
+          expected_status_code: 401
+        data:
+          since: "2024-07"
+          is_active: false
+
+      step_change_member_amount:
+        _exec_method_: api_put
+        url: api/members/1/amount
+        control:
+          expected_status_code: 401
+        data:
+          since: "2024-07"
+          amount: 7.7
+
+      step_post_member_donation:
+        _exec_method_: api_post
+        url: api/members/1/donation
+        control:
+          expected_status_code: 401
+        data:
+          pay_date: "2024-05-01"
+          amount: 8.8
+          is_cash: true
+
+
+    due_payments:
+
+      step_clear_bearer_token:
+        _exec_method_: clear_bearer_token
+
+      step_post_due_payment:
+        _exec_method_: api_post
+        url: api/dues_payments/
+        control:
+          expected_status_code: 401
+        data:
+          id_year_month: "2024-03"
+        expected_response:
+          detail: Not authenticated
+
+      step_list_due_payments:
+        _exec_method_: api_list
+        url: api/dues_payments/
+        control:
+          expected_status_code: 401
+        params:
+          since: "2024-03"
+        expected_response:
+          detail: Not authenticated
+
+      step_get_due_payment:
+        _exec_method_: api_get
+        url: api/dues_payments/2024-07/show
+        control:
+          expected_status_code: 401
+        expected_response:
+          detail: Not authenticated
+
+      step_get_member_due_payment:
+        _exec_method_: api_get
+        url: api/member_due_payment/1
+        control:
+          expected_status_code: 401
+        expected_response:
+          detail: Not authenticated
+
+      step_put_member_due_payment:
+        _exec_method_: api_get
+        url: api/member_due_payment/1
+        control:
+          expected_status_code: 401
+        data:
+          is_cash: true
+          pay_date: "2024-05-10"
+        expected_response:
+          detail: Not authenticated
+
+
+
+HAPPY:
+  _run_mode_: 1
+
+  _scenarios_:
+
+    setup:
+
+      step_authenticate:
+        _exec_method_: api_post_token
+        params:
+          cc: "dGVzdDpwZWRybw=="
+        expected_response:
+          token_type: "bearer"
+
+      step_clear_db:
+        _exec_method_: api_get_str
+        url: api/tests/reset
+
+    due_payments:
+
+      step_post_due_payment:
+        _exec_method_: api_post
+        url: api/dues_payments/
+        control:
+          expected_status_code: 201
+          ok: 201
+        data:
+          id_year_month: "2024-03"
+
+    members:
+
+      step_post_member:
+        _exec_method_: api_post
+        url: api/members/
+        control:
+          expected_status_code: 201
+          ok: 201
+        data: *M1
+        expected_response: *M1
+        _save: M1
+
+      step_get_member:
+        _exec_method_: api_get
+        _based_on_: ["members/step_post_member", ["expected_response"]]
+        url: api/members/?
+        control:
+          expected_status_code: 200
+        expected_response:
+          total_months_missing: 1
+          total_amount_missing: 15.0
+          total_months_paid: 0
+          total_amount_paid: 0.0
+          months_missing: ["2024-03"]
+          member_history: [*M1]
+        _get: M1.member_id
+
+      step_list_members:
+        _exec_method_: api_list
+        url: api/members/
+        control:
+          expected_status_code: 200
+        expected_response: [*M1]
+
+      step_list_donations:
+        _exec_method_: api_list
+        url: api/members/donations
+
+      step_update_member:
+        _exec_method_: api_put
+        url: api/members/?
+        data: *M2
+        expected_response: *M2
+        _get: M1.member_id
+
+      step_post_member_donation:
+        _exec_method_: api_post
+        url: api/members/?/donation
+        data:
+          pay_date: "2024-05-01"
+          amount: 8.8
+          is_cash: true
+        _get: M1.member_id
+
+      step_change_member_active1:
+        _exec_method_: api_put
+        url: api/members/?/active
+        data:
+          since: "2024-07"
+          is_active: false
+        expected_response:
+          is_active: false
+        _get: M1.member_id
+
+      step_change_member_amount1:
+        _exec_method_: api_put
+        url: api/members/?/amount
+        control:
+          expected_status_code: 409
+        data:
+          since: "2024-03"
+          amount: 7.7
+        _get: M1.member_id
+
+      step_change_member_active2:
+        _exec_method_: api_put
+        url: api/members/?/active
+        data:
+          since: "2024-03"
+          is_active: true
+        expected_response:
+          is_active: true
+        _get: M1.member_id
+
+      step_change_member_amount2:
+        _exec_method_: api_put
+        url: api/members/?/amount
+        data:
+          since: "2024-03"
+          amount: 3.3
+        expected_response:
+          amount: 3.3
+        _get: M1.member_id
+
+...

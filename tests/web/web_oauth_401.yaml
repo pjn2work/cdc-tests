@@ -1,0 +1,61 @@
+---
+
+
+CONNECTIVITY:
+  _run_mode_: USECASES_AS_TESTSTEPS
+
+  _usecases_:
+
+    step_health:
+      _exec_method_: api_get_str
+      url: health
+      expected_response: "\"I'm alive\""
+
+
+
+TEST_401:
+  _run_mode_: 1
+
+  _scenarios_:
+
+    setup:
+
+      step_clear_bearer_token:
+        _exec_method_: clear_bearer_token
+
+      step_authenticate:
+        _exec_method_: api_post_token
+        params:
+          cc: "dGVzdDpwZWRybw=="
+        expected_response:
+          token_type: "bearer"
+
+    index:
+
+      step_index:
+        _exec_method_: api_get
+        url: web/
+        control:
+          expected_status_code: 401
+
+    members:
+
+      step_members_list:
+        _exec_method_: api_get
+        url: web/members/
+        control:
+          expected_status_code: 401
+
+      step_members_create_get:
+        _exec_method_: api_get
+        url: web/members/create
+        control:
+          expected_status_code: 401
+
+      step_members_create_post:
+        _exec_method_: api_post
+        url: web/members/create
+        control:
+          expected_status_code: 401
+
+...

@@ -1,0 +1,860 @@
+---
+
+MEMBER1: &M1
+  start_date: "2024-03-01"
+  is_active: true
+  amount: 15.0
+  name: "Member 1"
+  tlf: "912000111"
+  email: "member1@gmail.com"
+  notes: "member 1 notes"
+
+MEMBER2: &M2
+  start_date: "2024-03-17"
+  is_active: true
+  amount: 10.3
+  name: "Member 2"
+  tlf: "933000222"
+  email: "member2@gmail.com"
+  notes: "member 2 notes"
+
+
+SELLER1: &S1
+  name: "Seller 1"
+  tlf: "912000111"
+  email: "seller1@gmail.com"
+  notes: "seller 1 notes"
+
+SELLER2: &S2
+  name: "Seller 2"
+  tlf: "912000222"
+  email: "seller2@gmail.com"
+  notes: "seller 2 notes"
+
+
+
+
+SETUP:
+  _run_mode_: USECASES_AS_TESTSTEPS
+
+  _usecases_:
+
+    step_health:
+      _exec_method_: api_get_str
+      url: health
+      expected_response: "\"I'm alive\""
+
+    step_authenticate:
+      _exec_method_: api_post_token
+      params:
+        cc: "dGVzdDpwZWRybw=="
+      expected_response:
+        token_type: "bearer"
+
+    step_clear_db:
+      _exec_method_: api_get_str
+      url: api/tests/reset
+
+
+
+POPULATE:
+  _run_mode_: SCENARIOS_AS_TESTS__USECASES_AS_TESTSTEPS
+
+  _scenarios_:
+
+    due_payments:
+
+      step_post_due_payment1:
+        _exec_method_: api_post
+        url: api/dues_payments/
+        control:
+          expected_status_code: 201
+          ok: 201
+        data:
+          id_year_month: "2024-02"
+
+      step_post_due_payment2:
+        _based_on_: ["due_payments/step_post_due_payment1", ["url", "control"]]
+        _exec_method_: api_post
+        data:
+          id_year_month: "2024-04"
+
+    members:
+
+      step_post_member1:
+        _exec_method_: api_post
+        url: api/members/
+        control:
+          expected_status_code: 201
+          ok: 201
+        data: *M1
+        _save: M1
+        expected_response:
+          member_id: 1
+          start_date: "2024-03-01"
+          is_active: true
+          amount: 15
+          name: Member 1
+          tlf: "912000111"
+          email: member1@gmail.com
+          notes: member 1 notes
+          total_months_missing: 1
+          total_amount_missing: 15
+          total_months_paid: 0
+          total_amount_paid: 0
+          total_quantity_bought: 0
+          total_amount_bought: 0
+          months_missing: [ ]
+          member_history:
+            - start_date: "2024-03-01"
+              is_active: true
+              amount: 15
+              name: Member 1
+              tlf: "912000111"
+              email: member1@gmail.com
+              notes: member 1 notes
+              total_months_missing: 1
+              total_amount_missing: 15
+              total_months_paid: 0
+              total_amount_paid: 0
+              total_quantity_bought: 0
+              total_amount_bought: 0
+              member_id: 1
+              since: 2024-07
+              tid: 1
+          member_due_payment:
+            - amount: 15
+              is_paid: false
+              is_member_active: true
+              is_cash: null
+              pay_date: null
+              tid: 1
+              member_id: 1
+              id_year_month: 2024-04
+          member_donations: [ ]
+          member_items: [ ]
+
+      step_post_due_payment3:
+        _based_on_: ["due_payments/step_post_due_payment1", ["url", "control"]]
+        _exec_method_: api_post
+        data:
+          id_year_month: "2024-01"
+
+      step_post_due_payment4:
+        _based_on_: ["due_payments/step_post_due_payment1", ["url", "control"]]
+        _exec_method_: api_post
+        data:
+          id_year_month: "2024-03"
+        expected_response:
+          total_amount_missing: 15
+          total_members_missing: 1
+
+      step_post_due_payment5:
+        _based_on_: ["due_payments/step_post_due_payment1", ["url", "control"]]
+        _exec_method_: api_post
+        data:
+          id_year_month: "2024-05"
+        expected_response:
+          total_amount_missing: 15
+          total_members_missing: 1
+
+      step_post_member2:
+        _exec_method_: api_post
+        url: api/members/
+        control:
+          expected_status_code: 201
+          ok: 201
+        data: *M2
+        _save: M2
+        expected_response:
+          start_date: "2024-03-17"
+          is_active: true
+          amount: 10.3
+          name: Member 2
+          tlf: "933000222"
+          email: member2@gmail.com
+          notes: member 2 notes
+          total_months_missing: 2
+          total_amount_missing: 20.6
+          total_months_paid: 0
+          total_amount_paid: 0
+          total_quantity_bought: 0
+          total_amount_bought: 0
+          member_id: 2
+          months_missing: [ ]
+          member_history:
+            - start_date: "2024-03-17"
+              is_active: true
+              amount: 10.3
+              name: Member 2
+              tlf: "933000222"
+              email: member2@gmail.com
+              notes: member 2 notes
+              total_months_missing: 2
+              total_amount_missing: 20.6
+              total_months_paid: 0
+              total_amount_paid: 0
+              total_quantity_bought: 0
+              total_amount_bought: 0
+              member_id: 2
+              since: 2024-07
+              tid: 2
+          member_due_payment:
+            - amount: 10.3
+              is_paid: false
+              is_member_active: true
+              is_cash: null
+              pay_date: null
+              tid: 4
+              member_id: 2
+              id_year_month: 2024-04
+            - amount: 10.3
+              is_paid: false
+              is_member_active: true
+              is_cash: null
+              pay_date: null
+              tid: 5
+              member_id: 2
+              id_year_month: 2024-05
+          member_donations: [ ]
+          member_items: [ ]
+
+    member_donations:
+
+      step_post_member1_donation:
+        _exec_method_: api_post
+        url: api/members/?/donation
+        _get: M1.member_id
+        data:
+          amount: 28.8
+          is_cash: true
+          pay_date: "2024-04-15"
+
+    member_due_payments:
+
+      step_post_member1_pay_dp:
+        _exec_method_: api_put
+        url: api/member_due_payment/3
+        data:
+          is_cash: true
+          pay_date: "2024-05-11"
+        expected_response:
+          id_year_month: "2024-05"
+          pay_date: "2024-05-11"
+          amount: 15.0
+          is_paid: true
+          is_cash: true
+
+      step_post_member2_pay_dp:
+        _exec_method_: api_put
+        url: api/member_due_payment/5
+        data:
+          is_cash: false
+          pay_date: "2024-05-12"
+        expected_response:
+          id_year_month: "2024-05"
+          pay_date: "2024-05-12"
+          amount: 10.3
+          is_paid: true
+          is_cash: false
+
+    expense_accounts:
+
+      step_create_expense_account1:
+        _exec_method_: api_post
+        url: api/sellers/expense-accounts
+        control:
+          expected_status_code: 201
+          ok: 201
+        data:
+          name: "Expense Account 1"
+          notes: "EA 1 notes"
+
+      step_create_expense_account2:
+        _exec_method_: api_post
+        url: api/sellers/expense-accounts
+        control:
+          expected_status_code: 201
+          ok: 201
+        data:
+          name: "Expense Account 2"
+          notes: "EA 2 notes"
+
+    sellers:
+
+      step_create_seller1:
+        _exec_method_: api_post
+        url: api/sellers/
+        control:
+          expected_status_code: 201
+          ok: 201
+        data: *S1
+        _save: S1
+
+      step_create_seller2:
+        _exec_method_: api_post
+        url: api/sellers/
+        control:
+          expected_status_code: 201
+          ok: 201
+        data: *S2
+        _save: S2
+
+    categories:
+
+      step_create_category1:
+        _exec_method_: api_post
+        url: api/items/categories
+        control:
+          expected_status_code: 201
+          ok: 201
+        data:
+          name: "Category 1"
+          notes: "Category 1 notes"
+
+      step_create_category2:
+        _exec_method_: api_post
+        url: api/items/categories
+        control:
+          expected_status_code: 201
+          ok: 201
+        data:
+          name: "Category 2"
+          notes: "Category 2 notes"
+
+    items:
+
+      step_create_item1:
+        _exec_method_: api_post
+        url: api/items/
+        control:
+          expected_status_code: 201
+          ok: 201
+        data:
+          category_id: 1
+          name: "Item 1"
+          base_price: 1
+          notes: "Item 1 notes"
+
+      step_create_item2:
+        _exec_method_: api_post
+        url: api/items/
+        control:
+          expected_status_code: 201
+          ok: 201
+        data:
+          category_id: 1
+          name: "Item 2"
+          base_price: 2
+          notes: "Item 2 notes"
+
+      step_create_item3:
+        _exec_method_: api_post
+        url: api/items/
+        control:
+          expected_status_code: 201
+          ok: 201
+        data:
+          category_id: 1
+          name: "Item 3"
+          base_price: 3
+          notes: "Item 3 notes"
+
+    seller_items:
+
+      step_seller1_item_1:
+        _exec_method_: api_post
+        url: api/items/1/sellers
+        control:
+          expected_status_code: 201
+          ok: 201
+        data:
+          seller_id: 1
+          ea_id: 1
+          quantity: 2
+          total_price: 20.0
+          notes: "Item 1 Seller 1 notes"
+          sell_date: "2024-01-25"
+        expected_response:
+          item_id: 1
+          seller_id: 1
+          ea_id: 1
+          quantity: 2
+          total_price: 20.0
+          notes: "Item 1 Seller 1 notes"
+          sell_date: "2024-01-25"
+
+    member_items:
+
+      step_member1_item_2:
+        _exec_method_: api_post
+        url: api/items/2/members
+        control:
+          expected_status_code: 201
+          ok: 201
+        data:
+          member_id: 1
+          quantity: 3
+          total_price: 30.0
+          is_cash: false
+          notes: "Item 2 Member 1 notes"
+          buy_date: "2024-01-26"
+        expected_response:
+          item_id: 2
+          member_id: 1
+          quantity: 3
+          total_price: 30.0
+          is_cash: false
+          notes: "Item 2 Member 1 notes"
+          buy_date: "2024-01-26"
+
+
+      step_member2_item_2:
+        _exec_method_: api_post
+        url: api/items/2/members
+        control:
+          expected_status_code: 201
+          ok: 201
+        data:
+          member_id: 2
+          quantity: 4
+          total_price: 40.0
+          is_cash: true
+          notes: "Item 2 Member 2 notes"
+          buy_date: "2024-01-27"
+        expected_response:
+          item_id: 2
+          member_id: 2
+          quantity: 4
+          total_price: 40.0
+          is_cash: true
+          notes: "Item 2 Member 2 notes"
+          buy_date: "2024-01-27"
+
+
+
+VALIDATIONS:
+  _run_mode_: SCENARIOS_AS_TESTS__USECASES_AS_TESTSTEPS
+
+  _scenarios_:
+
+    expense_accounts:
+
+      step_get_expense_account1:
+        _exec_method_: api_get
+        url: api/sellers/expense-accounts/1
+        expected_response:
+          ea_id: 1
+          name: "Expense Account 1"
+          notes: "EA 1 notes"
+          total_amount_seller_sold: 20.0
+          total_quantity_seller_sold: 2
+          seller_items:
+            - seller_id: 1
+              ea_id: 1
+              quantity: 2
+              total_price: 20
+              notes: Item 1 Seller 1 notes
+              sell_date: "2024-01-25"
+              tid: 1
+              item_id: 1
+
+      step_get_expense_account2:
+        _exec_method_: api_get
+        url: api/sellers/expense-accounts/2
+        expected_response:
+          ea_id: 2
+          name: "Expense Account 2"
+          notes: "EA 2 notes"
+          total_amount_seller_sold: 0.0
+          total_quantity_seller_sold: 0
+          seller_items: []
+
+      update_expense_account2:
+        _exec_method_: api_put
+        url: api/sellers/expense-accounts/2
+        data:
+          name: "Expense Account 2.1"
+          notes: "EA 2.1 notes"
+        expected_response:
+          ea_id: 2
+          name: "Expense Account 2.1"
+          notes: "EA 2.1 notes"
+          total_amount_seller_sold: 0.0
+          total_quantity_seller_sold: 0
+          seller_items: []
+
+      step_list_expense_accounts:
+        _exec_method_: api_list
+        url: api/sellers/expense-accounts
+        expected_response:
+          - name: Expense Account 1
+            notes: EA 1 notes
+            ea_id: 1
+            total_amount_seller_sold: 20
+            total_quantity_seller_sold: 2
+          - name: Expense Account 2.1
+            notes: EA 2.1 notes
+            ea_id: 2
+            total_amount_seller_sold: 0
+            total_quantity_seller_sold: 0
+
+    sellers:
+
+      step_get_seller1:
+        _exec_method_: api_get
+        url: api/sellers/1
+        expected_response:
+          seller_id: 1
+          name: Seller 1
+          tlf: "912000111"
+          email: seller1@gmail.com
+          notes: seller 1 notes
+          total_amount_sold: 20
+          total_quantity_sold: 2
+          seller_items:
+            - seller_id: 1
+              ea_id: 1
+              quantity: 2
+              total_price: 20
+              notes: Item 1 Seller 1 notes
+              sell_date: "2024-01-25"
+              tid: 1
+              item_id: 1
+
+      step_get_seller2:
+        _exec_method_: api_get
+        url: api/sellers/2
+        expected_response:
+          seller_id: 2
+          name: Seller 2
+          tlf: "912000222"
+          email: seller2@gmail.com
+          notes: seller 2 notes
+          total_amount_sold: 0
+          total_quantity_sold: 0
+          seller_items: []
+
+      update_seller2:
+        _exec_method_: api_put
+        url: api/sellers/2
+        data:
+          seller_id: 2
+          name: Seller 2.1
+          tlf: "912000221"
+          email: seller2.1@gmail.com
+          notes: seller 2.1 notes
+        expected_response:
+          seller_id: 2
+          name: Seller 2.1
+          tlf: "912000221"
+          email: seller2.1@gmail.com
+          notes: seller 2.1 notes
+          total_amount_sold: 0.0
+          total_quantity_sold: 0
+          seller_items: []
+
+      step_list_sellers:
+        _exec_method_: api_list
+        url: api/sellers/
+        expected_response:
+          - name: Seller 1
+            tlf: "912000111"
+            email: seller1@gmail.com
+            notes: seller 1 notes
+            seller_id: 1
+            total_amount_sold: 20
+            total_quantity_sold: 2
+          - name: Seller 2.1
+            tlf: "912000221"
+            email: seller2.1@gmail.com
+            notes: seller 2.1 notes
+            seller_id: 2
+            total_amount_sold: 0
+            total_quantity_sold: 0
+
+    categories:
+
+      step_get_category1:
+        _exec_method_: api_get
+        url: api/items/categories/1
+        expected_response:
+          category_id: 1
+          name: Category 1
+          notes: Category 1 notes
+          total_amount_seller_sold: 20
+          total_quantity_seller_sold: 2
+          total_amount_member_sold: 70
+          total_quantity_member_sold: 7
+          items:
+            - category_id: 1
+              name: Item 1
+              base_price: 1
+              notes: Item 1 notes
+              item_id: 1
+              total_amount_seller_sold: 20
+              total_quantity_seller_sold: 2
+              total_amount_member_sold: 0
+              total_quantity_member_sold: 0
+            - category_id: 1
+              name: Item 2
+              base_price: 2
+              notes: Item 2 notes
+              item_id: 2
+              total_amount_seller_sold: 0
+              total_quantity_seller_sold: 0
+              total_amount_member_sold: 70
+              total_quantity_member_sold: 7
+            - category_id: 1
+              name: Item 3
+              base_price: 3
+              notes: Item 3 notes
+              item_id: 3
+              total_amount_seller_sold: 0
+              total_quantity_seller_sold: 0
+              total_amount_member_sold: 0
+              total_quantity_member_sold: 0
+
+      step_get_category2:
+        _exec_method_: api_get
+        url: api/items/categories/2
+        expected_response:
+          category_id: 2
+          name: Category 2
+          notes: Category 2 notes
+          total_amount_seller_sold: 0
+          total_quantity_seller_sold: 0
+          total_amount_member_sold: 0
+          total_quantity_member_sold: 0
+          items: []
+
+      update_category2:
+        _exec_method_: api_put
+        url: api/items/categories/2
+        data:
+          name: Category 2.1
+          notes: Category 2.1 notes
+        expected_response:
+          category_id: 2
+          name: Category 2.1
+          notes: Category 2.1 notes
+          total_amount_seller_sold: 0
+          total_quantity_seller_sold: 0
+          total_amount_member_sold: 0
+          total_quantity_member_sold: 0
+          items: []
+
+      step_list_categories:
+        _exec_method_: api_list
+        url: api/items/categories
+        expected_response:
+          - name: Category 1
+            notes: Category 1 notes
+            category_id: 1
+            total_amount_seller_sold: 20
+            total_quantity_seller_sold: 2
+            total_amount_member_sold: 70
+            total_quantity_member_sold: 7
+          - name: Category 2.1
+            notes: Category 2.1 notes
+            category_id: 2
+            total_amount_seller_sold: 0
+            total_quantity_seller_sold: 0
+            total_amount_member_sold: 0
+            total_quantity_member_sold: 0
+
+    items:
+
+      step_get_item1:
+        _exec_method_: api_get
+        url: api/items/1
+        expected_response:
+          item_id: 1
+          category_id: 1
+          name: Item 1
+          base_price: 1
+          notes: Item 1 notes
+          total_amount_seller_sold: 20
+          total_quantity_seller_sold: 2
+          total_amount_member_sold: 0
+          total_quantity_member_sold: 0
+          seller_items:
+            - seller_id: 1
+              ea_id: 1
+              quantity: 2
+              total_price: 20
+              notes: Item 1 Seller 1 notes
+              sell_date: "2024-01-25"
+              tid: 1
+              item_id: 1
+          member_items: [ ]
+
+      step_get_item2:
+        _exec_method_: api_get
+        url: api/items/2
+        expected_response:
+          item_id: 2
+          category_id: 1
+          name: Item 2
+          base_price: 2
+          notes: Item 2 notes
+          total_amount_seller_sold: 0
+          total_quantity_seller_sold: 0
+          total_amount_member_sold: 70
+          total_quantity_member_sold: 7
+          seller_items: [ ]
+          member_items:
+            - member_id: 1
+              quantity: 3
+              total_price: 30
+              notes: Item 2 Member 1 notes
+              buy_date: "2024-01-26"
+              is_cash: false
+              tid: 1
+              item_id: 2
+            - member_id: 2
+              quantity: 4
+              total_price: 40
+              notes: Item 2 Member 2 notes
+              buy_date: "2024-01-27"
+              is_cash: true
+              tid: 2
+              item_id: 2
+
+      update_item2:
+        _exec_method_: api_put
+        url: api/items/2
+        data:
+          category_id: 2
+          name: "Item 2.1"
+          base_price: 2.1
+          notes: "Item 2.1 notes"
+        expected_response:
+          item_id: 2
+          category_id: 2
+          name: "Item 2.1"
+          base_price: 2.1
+          notes: "Item 2.1 notes"
+          total_amount_seller_sold: 0
+          total_quantity_seller_sold: 0
+          total_amount_member_sold: 70
+          total_quantity_member_sold: 7
+          seller_items: [ ]
+          member_items:
+            - member_id: 1
+              quantity: 3
+              total_price: 30
+              notes: Item 2 Member 1 notes
+              buy_date: "2024-01-26"
+              is_cash: false
+              tid: 1
+              item_id: 2
+            - member_id: 2
+              quantity: 4
+              total_price: 40
+              notes: Item 2 Member 2 notes
+              buy_date: "2024-01-27"
+              is_cash: true
+              tid: 2
+              item_id: 2
+
+      step_list_items:
+        _exec_method_: api_list
+        url: api/items/
+        expected_response:
+          - category_id: 1
+            name: Item 1
+            base_price: 1.0
+            notes: Item 1 notes
+            item_id: 1
+            total_amount_seller_sold: 20.0
+            total_quantity_seller_sold: 2
+            total_amount_member_sold: 0.0
+            total_quantity_member_sold: 0
+          - category_id: 2
+            name: Item 2.1
+            base_price: 2.1
+            notes: Item 2.1 notes
+            item_id: 2
+            total_amount_seller_sold: 0
+            total_quantity_seller_sold: 0
+            total_amount_member_sold: 70.0
+            total_quantity_member_sold: 7
+          - category_id: 1
+            name: Item 3
+            base_price: 3.0
+            notes: Item 3 notes
+            item_id: 3
+            total_amount_seller_sold: 0.0
+            total_quantity_seller_sold: 0
+            total_amount_member_sold: 0.0
+            total_quantity_member_sold: 0
+
+      step_get_category2:
+        _exec_method_: api_get
+        url: api/items/categories/2
+        expected_response:
+          category_id: 2
+          name: Category 2.1
+          notes: Category 2.1 notes
+          total_amount_seller_sold: 0.0
+          total_quantity_seller_sold: 0
+          total_amount_member_sold: 70
+          total_quantity_member_sold: 7
+          items:
+            - category_id: 2
+              name: Item 2.1
+              base_price: 2.1
+              notes: Item 2.1 notes
+              item_id: 2
+              total_amount_seller_sold: 0
+              total_quantity_seller_sold: 0
+              total_amount_member_sold: 70.0
+              total_quantity_member_sold: 7
+
+      step_get_category1:
+        _exec_method_: api_get
+        url: api/items/categories/1
+        _assertions:
+          - ["Total Items must be 2", "len(response['items']) == 2"]
+        expected_response:
+          category_id: 1
+          name: Category 1
+          notes: Category 1 notes
+          total_amount_seller_sold: 20
+          total_quantity_seller_sold: 2
+          total_amount_member_sold: 0
+          total_quantity_member_sold: 0
+          items:
+            - category_id: 1
+              name: Item 1
+              base_price: 1
+              notes: Item 1 notes
+              item_id: 1
+              total_amount_seller_sold: 20
+              total_quantity_seller_sold: 2
+              total_amount_member_sold: 0
+              total_quantity_member_sold: 0
+            - category_id: 1
+              name: Item 3
+              base_price: 3
+              notes: Item 3 notes
+              item_id: 3
+              total_amount_seller_sold: 0
+              total_quantity_seller_sold: 0
+              total_amount_member_sold: 0
+              total_quantity_member_sold: 0
+
+    members:
+      step_list_members:
+        _exec_method_: api_get
+
+    seller_items:
+      step_get_category1:
+        _exec_method_: api_get
+
+    member_items:
+      step_get_category1:
+        _exec_method_: api_get
+
+...
